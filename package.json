@@ -3,15 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "build:sit": "vue-cli-service build --mode production.sit",
+    "build:uat": "vue-cli-service build --mode production.uat",
+    "build:prod": "vue-cli-service build --mode production.prod",
+    "build:dev": "vue-cli-service build --mode production.dev"
   },
   "dependencies": {
     "axios": "0.18.0",
     "element-theme": "2.0.1",
     "element-theme-chalk": "2.4.7",
     "element-ui": "2.13.0",
+    "js-cookie": "2.2.0",
+    "lodash": "4.17.11",
     "vue": "^2.6.11",
     "vue-i18n": "8.1.0",
     "vue-router": "3.0.1",
