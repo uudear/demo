@@ -1,11 +1,10 @@
 import axios from 'axios'
+import router from '@/router'
 import Cookies from 'js-cookie'
 import qs from 'qs'
-import isPlainObject from 'lodash/isPlainObject'
 
-const isProd = process.env.NODE_ENV === 'development'
+const isProd = process.env.NODE_ENV === 'production'
 const baseURL = isProd ? process.env.VUE_APP_GATEWAY : process.env.VUE_APP_PIXAPI
-console.log('baseURL', process.env)
 
 const http = axios.create({
   baseURL: baseURL,
@@ -26,13 +25,13 @@ http.interceptors.request.use(config => {
       ...{ _t: new Date().getTime() }
     }
   }
-  if (isPlainObject(config.params)) {
+  if (JSON.stringify(config.params) !== '{}') {
     config.params = {
       ...defaults,
       ...config.params
     }
   }
-  if (isPlainObject(config.data)) {
+  if (JSON.stringify(config.data) !== '{}') {
     config.data = {
       ...defaults,
       ...config.data
@@ -43,6 +42,26 @@ http.interceptors.request.use(config => {
   }
   return config
 }, error => {
+  return Promise.reject(error)
+})
+
+/**
+ * 响应拦截
+ */
+http.interceptors.response.use(response => {
+  console.log('response', response)
+  if (response.data.code === 401 || response.data.code === 10001) {
+    this.$store.dispatch('logout')
+    router.replace({ name: 'login' })
+    return Promise.reject(response.data.msg)
+  } else if (response.data.code === 500) {
+    // let msg = Cookies.get('language') === 'zh-CN' ? '服务器内部错误' : 'Internal Server Error'
+    // return Promise.reject(msg)
+    // return Promise.reject(msg)
+  }
+  return response.data
+}, error => {
+  console.error(error)
   return Promise.reject(error)
 })
 
