@@ -20,7 +20,7 @@ export default {
 
       })
     },
-    loginout () {
+    logOut () {
       Cookies.remove(TOKEN_KEY)
     }
   }
