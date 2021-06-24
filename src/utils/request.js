@@ -1,6 +1,6 @@
 import axios from 'axios'
-// import router from '@/router'
-// import store from '@/store'
+import router from '@/router'
+import store from '@/store'
 import Cookies from 'js-cookie'
 import qs from 'qs'
 
@@ -50,15 +50,15 @@ http.interceptors.request.use(config => {
  * 响应拦截
  */
 http.interceptors.response.use(response => {
-  if (response.data.code === 401 || response.data.code === 10001) {
-    // store.dispatch('logOut')
-    // router.replace({ path: '/login' })
+  if ([401, 10004, 10010].includes(response.data.code)) {
+    store.dispatch('logOut')
+    router.replace({ path: '/login' })
     return Promise.reject(response.data.msg)
   } else if (response.data.code === 500) {
     const msg = Cookies.get('language') === 'zh-CN' ? '服务器内部错误' : 'Internal Server Error'
     return Promise.reject(msg)
   }
-  return response.data
+  return response.data.data
 }, error => {
   console.error(error)
   return Promise.reject(error)
