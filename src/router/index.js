@@ -19,8 +19,6 @@ function filterTree (fn, tree) {
   return tree
 }
 
-const routeTemp = []
-
 const pageRoutes = [
   {
     path: '/404',
@@ -105,8 +103,6 @@ function addDynamicMenuAndRoutes () {
   $http.get('/sys/menu/nav').then((res) => {
     // 添加动态路由
     const menuList = filterTree(item => item.appCode === 'FMEA', res)
-    console.log('menuList', menuList)
-
     addDynamicRoutes([...menuList])
 
     // 保存加载状态
@@ -119,57 +115,68 @@ function addDynamicMenuAndRoutes () {
 }
 
 function addDynamicRoutes (menuList = [], routes = []) {
+  var routeTemp = []
   var temp = []
   for (var i = 0; i < menuList.length; i++) {
     if (menuList[i].children && menuList[i].children.length >= 1) {
-      console.log('children', menuList[i].children)
-      const arr = menuList[i].children
-      // const newChildren = []
-      // for (var y = 0; y < arr.length; y++) {
-      //   console.log('内容', arr[y].url.search('/router'))
-      //   if (arr[y].url.search('/router') !== -1) {
-      //     arr[y].url = `${menuList[i].url}/${arr[y].url}`
-      //   } else {
-      //     arr[y].url = `${menuList[i].url}/router/${arr[y].url}`
-      //   }
-      //   newChildren.push(arr[y])
-      // }
-      temp = temp.concat(arr)
-    } else if (menuList[i].url) {
-      // 创建路由配置
-      var route = {
-        path: menuList[i].url,
-        component: null,
-        name: menuList[i].name,
-        meta: {
-          menuId: menuList[i].menuId,
-          title: menuList[i].name,
-          isDynamic: true,
-          isTab: true,
-          iframeUrl: ''
+      for (var y = 0; y < menuList[i].children.length; y++) {
+        if (menuList[i].url.search('/router') !== -1) {
+          menuList[i].children[y].url = `${menuList[i].url}/${menuList[i].children[y].url}`
+        } else {
+          menuList[i].children[y].url = `${menuList[i].url}/router/${menuList[i].children[y].url}`
+          routeTemp.push(menuList[i].children[y])
         }
       }
-      // url以http[s]://开头, 通过iframe展示
-      if (isURL(menuList[i].url)) {
-        route.path = menuList[i].url
-        route.name = menuList[i].name
-        route.meta.iframeUrl = menuList[i].url
-      } else {
-        try {
-          // 根据菜单URL动态加载vue组件，这里要求vue组件须按照url路径存储
-          // 如url="sys/user"，则组件路径应是"@/views/sys/user.vue",否则组件加载不到
-          route.component = resolve => require([`@/views/${menuList[i].url}`], resolve)
-        } catch (e) {}
-      }
-      routes.push(route)
+      temp = temp.concat(menuList[i].children)
+    } else if (menuList[i].url) {
+      routeTemp.push(menuList[i])
     }
   }
-
+  routeTemp.forEach((item, index) => {
+    console.log('内容', item)
+    // 创建路由配置
+    var route = {
+      path: item.url.replace('/router', ''),
+      component: null,
+      name: item.name,
+      meta: {
+        menuId: item.id,
+        title: item.name,
+        isDynamic: true,
+        isTab: true,
+        iframeUrl: ''
+      }
+    }
+    // url以http[s]://开头, 通过iframe展示
+    if (isURL(item.url)) {
+      route.path = item.url.replace('/router', '')
+      route.name = item.name
+      route.meta.iframeUrl = item.url
+    } else {
+      route.component = resolve => require([`@/views/modules/${item.url}`], resolve)
+    }
+    routes.push(route)
+  })
   if (temp.length >= 1) {
-    console.log('temp', routes)
     addDynamicRoutes(temp, routes)
   }
-  console.log('routes', routes)
+  console.log('menuList', routes)
+
+  // const newmoduleRoutes = {
+  //   path: '/',
+  //   component: () => import('@/views/layout/main'),
+  //   name: 'main',
+  //   redirect: { name: `${routes[0].name}` },
+  //   meta: { title: '主入口布局' },
+  //   children: [
+  //     {
+  //       path: `${routes[0].path.replace('/router', '')}`,
+  //       component: () => resolve => require([`@/views/modules/${routes[0].path}`], resolve),
+  //       name: `${routes[0].name}`,
+  //       meta: { title: '首页', isTab: true }
+  //     }
+  //   ]
+  // }
   // 添加路由
   router.addRoutes([
     {
@@ -180,5 +187,5 @@ function addDynamicRoutes (menuList = [], routes = []) {
     { path: '*', redirect: { name: '404' } }
   ])
 }
-
+console.log('内容', router)
 export default router
